@@ -1,0 +1,15 @@
+main: me.bzvol.fisskypvp.FisSkyPVP
+name: FisSkyPVP
+version: 1.0
+author: bzvol
+description: FisGeng's SkyPVP plugin
+api-version: 1.20
+libraries:
+  - org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0
+commands:
+  fsp:
+    description: FG's SkyPVP main command
+    usage: To get help, type /<command> help
+    aliases: [fisskypvp]
+    permission: fisskypvp.main
+    permission-message: You don't have permission to use this command!
