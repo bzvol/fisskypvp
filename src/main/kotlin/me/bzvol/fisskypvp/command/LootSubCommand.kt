@@ -7,7 +7,9 @@ import me.bzvol.fisskypvp.loot.LootController
 import me.bzvol.fisskypvp.loot.LootEntry
 import me.bzvol.paperelevate.Util.closest
 import me.bzvol.paperelevate.command.Command2
+import me.bzvol.paperelevate.command.CommandUtil
 import me.bzvol.paperelevate.command.argparser.SimpleArgParser
+import org.bukkit.Location
 import org.bukkit.block.Container
 import org.bukkit.entity.Player
 import org.bukkit.util.BlockIterator
@@ -23,6 +25,10 @@ object LootSubCommand {
                 argParser(deleteArgParser)
                 action { sender: Player, args -> delete(sender, args) }
             }
+            .subCommand("set-cooldown", true) {
+                argParser(setCooldownArgParser)
+                action { sender: Player, args -> setCooldown(sender, args) }
+            }
             .subCommand("list", true) {
                 action { sender: Player, _ -> list(sender) }
             }
@@ -30,17 +36,18 @@ object LootSubCommand {
                 argParser(infoArgParser)
                 action { sender: Player, args -> info(sender, args) }
             }
-            .subCommand("set-cooldown", true) {
-                argParser(setCooldownArgParser)
-                action { sender: Player, args -> setCooldown(sender, args) }
+            .subCommand("tp", true) {
+                argParser(tpParser)
+                action { sender: Player, args -> tp(sender, args) }
             }
             .build()
 
     private val addArgParser = SimpleArgParser()
         .add<String>("name").addOptional<Int>("cooldown", LootConfigManager.defaultCooldown)
     private val deleteArgParser = SimpleArgParser().addOptional<String>("name")
-    private val infoArgParser = SimpleArgParser().addOptional<String>("name")
     private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown")
+    private val infoArgParser = SimpleArgParser().addOptional<String>("name")
+    private val tpParser = SimpleArgParser().add<String>("name")
 
     private fun add(sender: Player, args: Array<String>) {
         try {
@@ -70,7 +77,9 @@ object LootSubCommand {
             FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
 
             sender.sendPrefixedMessage("§c${e.message}")
-            sender.sendMessage("§eUsage: §r/fsp loot save §b-n <name> §7[§3-c <cooldown>§7]")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot add", emptyList(), addArgParser)
+            )
         }
     }
 
@@ -102,7 +111,9 @@ object LootSubCommand {
             FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
 
             sender.sendPrefixedMessage("§c${e.message}")
-            sender.sendMessage("§eUsage: §r/fsp loot remove §7[§3-n <name>§7]")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot delete", emptyList(), deleteArgParser)
+            )
         }
     }
 
@@ -141,7 +152,9 @@ object LootSubCommand {
             FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
 
             sender.sendPrefixedMessage("§c${e.message}")
-            sender.sendMessage("§eUsage: §r/fsp loot info §7[§3<name>§7] (or look at a loot chest)")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot info", emptyList(), infoArgParser)
+            )
         }
     }
 
@@ -151,7 +164,7 @@ object LootSubCommand {
             val cooldown = parsed["cooldown"] as Int
 
             val loot: LootEntry? = BlockIterator(sender, 10).closest { it.state is Container }
-                    ?.let { LootController.loot(it.location) }
+                ?.let { LootController.loot(it.location) }
 
             if (loot == null) {
                 sender.sendPrefixedMessage("§cNo loot chest found.")
@@ -165,7 +178,44 @@ object LootSubCommand {
             FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
 
             sender.sendPrefixedMessage("§c${e.message}")
-            sender.sendMessage("§eUsage: §r/fsp loot set-cooldown §7[§3-n <name>§7] §7§3-c <cooldown>")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot set-cooldown", emptyList(), setCooldownArgParser)
+            )
+        }
+    }
+
+    private fun tp(sender: Player, args: Array<String>) {
+        try {
+            val parsed = tpParser.parse(args)
+            val name = parsed["name"] as String
+
+            val loot = LootController.loot(name)
+            if (loot == null) {
+                sender.sendPrefixedMessage("§cNo loot chest found.")
+                return
+            }
+
+            val world = loot.location.world!!
+            val x = loot.location.blockX
+            val y = loot.location.blockY
+            val z = loot.location.blockZ
+
+            val highestY = world.getHighestBlockYAt(x, z) + 1
+            val tpLocation = world.getBlockAt(x, highestY, z).location.let {
+                Location(it.world, it.x + .5, it.y, it.z + .5)
+            }
+
+            sender.teleport(tpLocation)
+
+            val chestDistanceFromTp = highestY - y
+            sender.sendPrefixedMessage("§eThe loot chest is §f§l$chestDistanceFromTp§r§e blocks below you.")
+        } catch (e: Exception) {
+            FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
+
+            sender.sendPrefixedMessage("§c${e.message}")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot tp", emptyList(), tpParser)
+            )
         }
     }
 }
