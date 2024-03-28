@@ -1,6 +1,7 @@
 package me.bzvol.fisskypvp
 
 import me.bzvol.fisskypvp.FisSkyPVP.Companion.sendPrefixedMessage
+import me.bzvol.fisskypvp.config.BaseConfigManager
 import me.bzvol.fisskypvp.loot.LootController
 import org.bukkit.block.Container
 import org.bukkit.event.EventHandler
@@ -22,12 +23,14 @@ class ContainerOpenListener : Listener {
         val inventory = container.snapshotInventory
         inventory.clear()
 
+        val testMode = BaseConfigManager.testmodePlayers.contains(event.player.uniqueId.toString())
+
         val cooldown = loot.cooldown * 60 * 1000
         val now = System.currentTimeMillis()
         val lastOpened = loot.lastOpened
 
         val timeElapsed = now - lastOpened
-        if (timeElapsed < cooldown) {
+        if (timeElapsed < cooldown && !testMode) {
             val timeRemaining = cooldown - timeElapsed
             val minutesRemaining = (timeRemaining / 100.0 / 60.0).roundToInt() / 10.0
             event.player.sendPrefixedMessage("§eYou can open this loot in $minutesRemaining minutes.")
@@ -43,7 +46,7 @@ class ContainerOpenListener : Listener {
 
         container.update(true)
 
-        loot.lastOpened = now
+        if (!testMode) loot.lastOpened = now
         LootController.addOrUpdate(loot)
     }
 

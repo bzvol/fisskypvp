@@ -1,2 +1,2 @@
-default-cooldown: 60 # minutes
+default-cooldown: 10 # minutes
 loots: []

@@ -55,18 +55,20 @@ which uses multiple subcommands (currently only one: `LootCommand`).
 - [x] P2: Add `/fsp loot list` command to list all loot entries
 - [x] P3: Use SimpleArgParser instead of deprecated ArgParser, where applicable
 - [x] P3: Rename classes (implement a better naming scheme)
+- [x] P3: Add `/fsp loot tp <name>` command to teleport to the loot entry
+- [ ] P2: Pagination for `/fsp loot list`
 - [ ] P2: Add loot groups
   - [ ] Add groups in config
   - [ ] Add groups in loot entries
   - [ ] Add `/fsp loot setgroup <name> <group>` command to set the group of a loot entry
   - [ ] Add `/fsp group` commands to manage groups
-- [ ] P3: Add `/fsp loot tp <name>` command to teleport to the loot entry
 
 #### PaperElevate (an add-on for PaperMC plugins)
 - [x] P2: Implement `SimpleArgParser` and `FlaggedArgParser` classes
 - [x] P2: Add automatic usages and tab completions for ArgParser(s)
 - [x] P3: Implement `subCommandTabCompletions` for commands
 - [x] P2: Make allowed values providable
+- [ ] P1: Permissions (for subcommands)
 - [ ] P2: Implement `MixedArgParser` class
 - [ ] P2: Add allowed values to tab completions
 - [ ] P2: Allow subcommands and default action with parsed args at the same time

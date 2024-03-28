@@ -118,11 +118,15 @@ object LootSubCommand {
     }
 
     private fun list(sender: Player) =
-        sender.sendPrefixedMessage("§aList of all saved loots:\n" + LootConfigManager.loots.joinToString("\n") {
-            "§7- §e${it.name}§7: cooldown=§3${it.cooldown}§7m, " +
-                    "pos=(§3x=${it.location.blockX}§7,§3y=${it.location.blockY}§7,§3z=${it.location.blockZ}§7), " +
-                    "items=§3${it.items.size}"
-        }) // example: - demo: cooldown=5m, pos=(x=0,y=0,z=0), items=3
+        sender.sendPrefixedMessage("§aList of saved loots (§b${LootConfigManager.loots.size}§a in total):\n" +
+                LootConfigManager.loots.sortedBy { it.name }
+                    .joinToString("\n") {
+                        "§7- §e${it.name}§7: cooldown=§3${it.cooldown}§7m, " +
+                                "pos=(§3x=${it.location.blockX}§7," +
+                                "§3y=${it.location.blockY}§7," +
+                                "§3z=${it.location.blockZ}§7), " +
+                                "items=§3${it.items.size}"
+                    }) // example: - demo: cooldown=5m, pos=(x=0,y=0,z=0), items=3
 
     private fun info(sender: Player, args: Array<String>) {
         try {

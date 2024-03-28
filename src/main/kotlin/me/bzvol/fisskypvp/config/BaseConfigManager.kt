@@ -7,9 +7,13 @@ object BaseConfigManager {
 
     /* Plugin prefix is available in FGsSkyPVP.PREFIX as a constant - thus it's also uneditable */
 
+    var testmodePlayers: List<String>
+        get() = config.getStringList("testmode-players")
+        set(value) = setAndReload("testmode-players", value)
+
     fun init() {
-        config.addDefault("default-cooldown", 60)
         config.addDefault("plugin-prefix", FisSkyPVP.PREFIX)
+        config.addDefault("testmode-players", emptyList<String>())
 
         config.options().copyDefaults(true)
         FisSkyPVP.instance.saveDefaultConfig()
