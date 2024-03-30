@@ -32,5 +32,15 @@ class FisSkyPVP : JavaPlugin() {
         lateinit var logger: Logger
 
         fun CommandSender.sendPrefixedMessage(message: String) = sendMessage(PREFIX + message)
+
+        fun handleException(sender: CommandSender, usage: String? = null, function: () -> Unit) {
+            try {
+                function()
+            } catch (e: Exception) {
+                logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
+                sender.sendPrefixedMessage("§c${e.message}")
+                if (usage != null) sender.sendMessage(usage)
+            }
+        }
     }
 }
