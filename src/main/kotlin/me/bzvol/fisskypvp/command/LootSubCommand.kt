@@ -13,8 +13,11 @@ import org.bukkit.Location
 import org.bukkit.block.Container
 import org.bukkit.entity.Player
 import org.bukkit.util.BlockIterator
+import kotlin.math.ceil
 
 object LootSubCommand {
+    private const val LOOTS_PER_PAGE = 5
+
     operator fun invoke() =
         Command2.builder("loot", true)
             .subCommand("add", true) {
@@ -30,7 +33,7 @@ object LootSubCommand {
                 action { sender: Player, args -> setCooldown(sender, args) }
             }
             .subCommand("list", true) {
-                action { sender: Player, _ -> list(sender) }
+                action { sender: Player, args -> list(sender, args) }
             }
             .subCommand("info", true) {
                 argParser(infoArgParser)
@@ -45,6 +48,7 @@ object LootSubCommand {
     private val addArgParser = SimpleArgParser()
         .add<String>("name").addOptional<Int>("cooldown", LootConfigManager.defaultCooldown)
     private val deleteArgParser = SimpleArgParser().addOptional<String>("name")
+    private val listArgParser = SimpleArgParser().addOptional<Int>("page", 1)
     private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown")
     private val infoArgParser = SimpleArgParser().addOptional<String>("name")
     private val tpParser = SimpleArgParser().add<String>("name")
@@ -117,16 +121,46 @@ object LootSubCommand {
         }
     }
 
-    private fun list(sender: Player) =
-        sender.sendPrefixedMessage("§aList of saved loots (§b${LootConfigManager.loots.size}§a in total):\n" +
-                LootConfigManager.loots.sortedBy { it.name }
-                    .joinToString("\n") {
-                        "§7- §e${it.name}§7: cooldown=§3${it.cooldown}§7m, " +
-                                "pos=(§3x=${it.location.blockX}§7," +
-                                "§3y=${it.location.blockY}§7," +
-                                "§3z=${it.location.blockZ}§7), " +
-                                "items=§3${it.items.size}"
-                    }) // example: - demo: cooldown=5m, pos=(x=0,y=0,z=0), items=3
+    private fun list(sender: Player, args: Array<String>) {
+        try {
+            val parsed = listArgParser.parse(args)
+            val page = parsed["page"] as Int
+
+            val loots = LootConfigManager.loots.sortedBy { it.name }
+            if (loots.isEmpty()) {
+                sender.sendPrefixedMessage("§eThere are no saved loot chests.")
+                return
+            }
+
+            val totalPages = ceil(loots.size.toDouble() / LOOTS_PER_PAGE).toInt()
+            if (page < 1 || page > totalPages) {
+                sender.sendPrefixedMessage("§cInvalid page number. Must be between §b1 §cand §b$totalPages§c.")
+                return
+            }
+
+            val start = (page - 1) * LOOTS_PER_PAGE
+            val end = (start + LOOTS_PER_PAGE - 1).coerceAtMost(loots.size - 1)
+            val pageLoots = loots.slice(start..end)
+
+            sender.sendPrefixedMessage(
+                "§aList of saved loots (§b${loots.size}§a in total, page §b$page§a of §b$totalPages§a):\n" +
+                        pageLoots.joinToString("\n") {
+                            "§7- §e${it.name}§7: cooldown=§3${it.cooldown}§7m, " +
+                                    "pos=(§3x=${it.location.blockX}§7," +
+                                    "§3y=${it.location.blockY}§7," +
+                                    "§3z=${it.location.blockZ}§7), " +
+                                    "items=§3${it.items.size}"
+                        }
+            )
+        } catch (e: Exception) {
+            FisSkyPVP.logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
+
+            sender.sendPrefixedMessage("§c${e.message}")
+            sender.sendMessage(
+                CommandUtil.buildUsage("fsp loot list", emptyList(), listArgParser)
+            )
+        }
+    }
 
     private fun info(sender: Player, args: Array<String>) {
         try {

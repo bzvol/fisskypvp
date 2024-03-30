@@ -4,7 +4,7 @@
   <groupId>me.bzvol</groupId>
   <artifactId>FisSkyPVP</artifactId>
   <name>FisSkyPVP</name>
-  <version>1.0</version>
+  <version>1.0.2</version>
   <build>
     <sourceDirectory>src/main/kotlin</sourceDirectory>
     <plugins>

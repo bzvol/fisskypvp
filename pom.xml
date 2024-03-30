@@ -6,7 +6,7 @@
 
     <artifactId>FisSkyPVP</artifactId>
     <groupId>me.bzvol</groupId>
-    <version>1.0</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
 
     <name>FisSkyPVP</name>
@@ -26,7 +26,6 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
-
     </repositories>
 
     <build>
