@@ -49,7 +49,7 @@ object LootSubCommand {
         .add<String>("name").addOptional<Int>("cooldown", LootConfigManager.defaultCooldown)
     private val deleteArgParser = SimpleArgParser().addOptional<String>("name")
     private val listArgParser = SimpleArgParser().addOptional<Int>("page", 1)
-    private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown")
+    private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown").addOptional<String>("name")
     private val infoArgParser = SimpleArgParser().addOptional<String>("name")
     private val tpParser = SimpleArgParser().add<String>("name")
 
@@ -88,10 +88,7 @@ object LootSubCommand {
         val parsed = deleteArgParser.parse(args)
         val name = parsed["name"] as String
 
-        val loot: LootEntry? = if (name.isNotBlank()) LootController.loot(name)
-        else BlockIterator(sender, 10).closest { it.state is Container }
-            ?.let { LootController.loot(it.location) }
-
+        val loot = getLootByNameOrLook(name, sender)
         if (loot == null) {
             sender.sendPrefixedMessage("§cNo loot chest found.")
             return@handleException
@@ -151,10 +148,7 @@ object LootSubCommand {
         val parsed = infoArgParser.parse(args)
         val name = parsed["name"] as String?
 
-        val loot: LootEntry? = if (name?.isNotBlank() == true) LootController.loot(name)
-        else BlockIterator(sender, 10).closest { it.state is Container }
-            ?.let { LootController.loot(it.location) }
-
+        val loot = getLootByNameOrLook(name, sender)
         if (loot == null) {
             sender.sendPrefixedMessage(
                 if (name == null) "§cNo loot name specified."
@@ -178,10 +172,9 @@ object LootSubCommand {
     ) {
         val parsed = setCooldownArgParser.parse(args)
         val cooldown = parsed["cooldown"] as Int
+        val name = parsed["name"] as String?
 
-        val loot: LootEntry? = BlockIterator(sender, 10).closest { it.state is Container }
-            ?.let { LootController.loot(it.location) }
-
+        val loot = getLootByNameOrLook(name, sender)
         if (loot == null) {
             sender.sendPrefixedMessage("§cNo loot chest found.")
             return@handleException
@@ -220,4 +213,9 @@ object LootSubCommand {
         val chestDistanceFromTp = highestY - y
         sender.sendPrefixedMessage("§eThe loot chest is §f§l$chestDistanceFromTp§r§e blocks below you.")
     }
+
+    private fun getLootByNameOrLook(name: String?, player: Player, maxDistance: Int = 10): LootEntry? =
+        if (!name.isNullOrBlank()) LootController.loot(name)
+        else BlockIterator(player, maxDistance).closest { it.state is Container }
+            ?.let { LootController.loot(it.location) }
 }
