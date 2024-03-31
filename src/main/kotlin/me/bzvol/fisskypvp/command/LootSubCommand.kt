@@ -20,6 +20,7 @@ object LootSubCommand {
 
     operator fun invoke() =
         Command2.builder("loot", true)
+            .permission("fisskypvp.loot")
             .subCommand("add", true) {
                 argParser(addArgParser)
                 action { sender: Player, args -> add(sender, args) }
@@ -46,12 +47,16 @@ object LootSubCommand {
             .build()
 
     private val addArgParser = SimpleArgParser()
-        .add<String>("name").addOptional<Int>("cooldown", LootConfigManager.defaultCooldown)
-    private val deleteArgParser = SimpleArgParser().addOptional<String>("name")
+        .add<String>("name", allowedValues = ::getLootNames)
+        .addOptional<Int>("cooldown", LootConfigManager.defaultCooldown)
+    private val deleteArgParser = SimpleArgParser().addOptional<String>("name", allowedValues = ::getLootNames)
     private val listArgParser = SimpleArgParser().addOptional<Int>("page", 1)
-    private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown").addOptional<String>("name")
-    private val infoArgParser = SimpleArgParser().addOptional<String>("name")
-    private val tpParser = SimpleArgParser().add<String>("name")
+    private val setCooldownArgParser = SimpleArgParser().add<Int>("cooldown")
+        .addOptional<String>("name", allowedValues = ::getLootNames)
+    private val infoArgParser = SimpleArgParser().addOptional<String>("name", allowedValues = ::getLootNames)
+    private val tpParser = SimpleArgParser().add<String>("name", allowedValues = ::getLootNames)
+
+    private fun getLootNames(): List<String> = LootConfigManager.loots.map { it.name }
 
     private fun add(sender: Player, args: Array<String>) = handleException(
         sender,
@@ -64,7 +69,7 @@ object LootSubCommand {
         val block = BlockIterator(sender, 10).closest { it.state is Container }
         if (block?.state !is Container) {
             sender.sendPrefixedMessage("§cYou must be looking at a container to save it as a loot chest.")
-            return@handleException
+            return
         }
 
         val container = block.state as Container
@@ -91,7 +96,7 @@ object LootSubCommand {
         val loot = getLootByNameOrLook(name, sender)
         if (loot == null) {
             sender.sendPrefixedMessage("§cNo loot chest found.")
-            return@handleException
+            return
         }
 
         LootController.delete(loot.name)
@@ -116,13 +121,13 @@ object LootSubCommand {
         val loots = LootConfigManager.loots.sortedBy { it.name }
         if (loots.isEmpty()) {
             sender.sendPrefixedMessage("§eThere are no saved loot chests.")
-            return@handleException
+            return
         }
 
         val totalPages = ceil(loots.size.toDouble() / LOOTS_PER_PAGE).toInt()
         if (page < 1 || page > totalPages) {
             sender.sendPrefixedMessage("§cInvalid page number. Must be between §b1 §cand §b$totalPages§c.")
-            return@handleException
+            return
         }
 
         val start = (page - 1) * LOOTS_PER_PAGE
@@ -154,7 +159,7 @@ object LootSubCommand {
                 if (name == null) "§cNo loot name specified."
                 else "§cNo loot chest found."
             )
-            return@handleException
+            return
         }
 
         sender.sendPrefixedMessage(
@@ -177,7 +182,7 @@ object LootSubCommand {
         val loot = getLootByNameOrLook(name, sender)
         if (loot == null) {
             sender.sendPrefixedMessage("§cNo loot chest found.")
-            return@handleException
+            return
         }
 
         LootController.addOrUpdate(loot.copy(cooldown = cooldown))
@@ -195,7 +200,7 @@ object LootSubCommand {
         val loot = LootController.loot(name)
         if (loot == null) {
             sender.sendPrefixedMessage("§cNo loot chest found.")
-            return@handleException
+            return
         }
 
         val world = loot.location.world!!

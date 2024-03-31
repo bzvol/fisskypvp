@@ -3,6 +3,7 @@ package me.bzvol.fisskypvp
 import me.bzvol.fisskypvp.command.MainCommand
 import me.bzvol.fisskypvp.config.BaseConfigManager
 import me.bzvol.fisskypvp.config.LootConfigManager
+import me.bzvol.paperelevate.PaperElevate
 import me.bzvol.paperelevate.Util.registerAllCommands
 import me.bzvol.paperelevate.Util.registerAllListeners
 import org.bukkit.command.CommandSender
@@ -12,6 +13,7 @@ import java.util.logging.Logger
 class FisSkyPVP : JavaPlugin() {
     override fun onEnable() {
         instance = this
+        PaperElevate.PLUGIN = this
         Companion.logger = this.logger
 
         BaseConfigManager.init()
@@ -33,11 +35,15 @@ class FisSkyPVP : JavaPlugin() {
 
         fun CommandSender.sendPrefixedMessage(message: String) = sendMessage(PREFIX + message)
 
-        fun handleException(sender: CommandSender, usage: String? = null, function: () -> Unit) {
+        inline fun handleException(sender: CommandSender, usage: String? = null, function: () -> Unit) {
             try {
                 function()
             } catch (e: Exception) {
-                logger.severe("Error thrown for ${sender.name}: ${e.stackTraceToString()}")
+                if (e is IllegalArgumentException) return
+
+                logger.severe("Error thrown for ${sender.name}: ${e.message}\n" +
+                        "Stack trace: ${e.stackTraceToString()}")
+
                 sender.sendPrefixedMessage("§c${e.message}")
                 if (usage != null) sender.sendMessage(usage)
             }

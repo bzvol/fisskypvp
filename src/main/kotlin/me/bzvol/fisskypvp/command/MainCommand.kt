@@ -13,6 +13,7 @@ import org.bukkit.entity.Player
 object MainCommand {
     operator fun invoke() =
         Command2.builder("fsp")
+            .permission("fisskypvp.base")
             .subCommand("help") {
                 action { sender, _ -> sender.sendUsage() }
             }
@@ -22,6 +23,7 @@ object MainCommand {
             .subCommand(LootSubCommand())
             .subCommand("testmode", true) {
                 argParser(testModeParser)
+                permission("fisskypvp.loot")
                 action { sender: Player, args -> setTestMode(sender, args) }
             }
             .build()
@@ -39,18 +41,13 @@ object MainCommand {
         sender,
         CommandUtil.buildUsage("fsp testmode", emptyList(), testModeParser)
     ) {
-        if (!sender.hasPermission("fisskypvp.testmode")) {
-            sender.sendPrefixedMessage("§cYou do not have permission to use this command.")
-            return@handleException
-        }
-
         val parsed = testModeParser.parse(args)
         val mode = when (parsed["mode"] as String) {
             "on" -> true
             "off" -> false
             else -> {
                 sender.sendPrefixedMessage("§cInvalid mode. Must be 'on' or 'off'.")
-                return@handleException
+                return
             }
         }
 
